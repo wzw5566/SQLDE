@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import *
+from .models import UserRole,UserProfile,Role
 
 class UserDetailSerializer(serializers.Serializer):
     """
@@ -8,15 +8,16 @@ class UserDetailSerializer(serializers.Serializer):
     name = serializers.CharField()
     depat_id = serializers.IntegerField()
     rolse_id = UserRole.objects.first()
-    # roles = serializers.SerializerMethodField()
+    roles = serializers.SerializerMethodField()
     class Meta:
         model = UserProfile
         fields = ("name", "depat_id")
 
-    # def get_roles(self, obj):
-    #
-    #     role_object_list = obj.roles.all()
-    #     ret = []
-    #     for item in role_object_list:
-    #         ret.append({item.role_name})
-    #     return ret
+    def get_roles(self, obj):
+        user = obj
+        role_ids = UserRole.objects.filter(user_id__exact=user.id).values_list('role_id').all()
+        roles = Role.objects.filter(id__in=role_ids).all()
+        ret = []
+        for item in roles:
+            ret.append(item.role_name)
+        return ret

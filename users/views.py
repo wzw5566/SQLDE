@@ -15,13 +15,20 @@ from django.core import serializers
 
 class UserListView(APIView):
     def get(self, request, format=None):
+        # user = UserProfile.objects.all()
         user = UserProfile.objects.raw('select * from jt_users')
-        data = {
+
+        # data = dictfetchall(user)
+
+        data = json.loads(serializers.serialize("json", user))
+        data_result = {
             "code":200,
-            "msg":"success"
+            "msg":"success" ,
+            "data":data
         }
-        data['data'] = json.loads(serializers.serialize("json", user))
-        return JsonResponse(data)
+
+        return JsonResponse(data_result)
+
 
     def post(self, request, format=None):
         serializer = UserDetailSerializer(data=request.data)
@@ -30,11 +37,11 @@ class UserListView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# 将返回结果转换成字典
-def dictfetchall(cursor):
-    "Return all rows from a cursor as a dict"
-    columns = [col[0] for col in cursor.description]
-    return [
-        dict(zip(columns, row))
-        for row in cursor.fetchall()
-    ]
+class UsersView(APIView):
+    """
+    序列化方式获得多对多
+    """
+    def get(self, request, format=None):
+        user = UserProfile.objects.all()
+        user_serializer = UserDetailSerializer(user, many=True)
+        return JsonResponse(user_serializer.data,safe=False)
