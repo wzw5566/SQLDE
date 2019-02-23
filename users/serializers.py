@@ -26,12 +26,6 @@ class UserDetailSerializer(serializers.ModelSerializer):
             ret.append(item.role_name)
         return ret
 
-    # def get_depat_name(self,obj):
-    #
-    #     user = obj
-    #     depat_name = Department.objects.filter(id = user.depat_id)[0].depat_name
-    #     return depat_name
-
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     """
@@ -57,15 +51,22 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return ret
 
     def create(self, validated_data):
+        """
+        重载 create方法，自定义添加多表关系
+        :param validated_data: 请求的验证数据
+        :return: 创建成功的user序列数据
+        """
 
         user = UserProfile.objects.create(** validated_data)
 
         try:
 
+            #重点：从原始的请求数据中拿到不在model序列化中的roles数据
             role_list = self.initial_data["roles"]
-            print(role_list)
-            for item in role_list:
 
+            #对获得role列表数据进行循环添加
+            for item in role_list:
+                #为第三张关系表添加数据，user_id ,role_id
                 UserRole.objects.create(user_id=user.id, role_id=item, is_delete=False)
 
         except Exception as e:
